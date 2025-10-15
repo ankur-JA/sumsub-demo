@@ -4,10 +4,10 @@ import { mapStatusToProgress } from '@/lib/status-mapper';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { applicantId: string } }
+  { params }: { params: Promise<{ applicantId: string }> }
 ) {
   try {
-    const { applicantId } = params;
+    const { applicantId } = await params;
 
     const applicant = db.getApplicant(applicantId);
     if (!applicant) {

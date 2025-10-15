@@ -9,7 +9,13 @@ export interface Applicant {
   updatedAt: string;
 }
 
-const applicants = new Map<string, Applicant>();
+// Use globalThis to persist data across hot reloads in development
+const globalForDb = globalThis as unknown as {
+  applicants: Map<string, Applicant> | undefined;
+};
+
+const applicants = globalForDb.applicants ?? new Map<string, Applicant>();
+globalForDb.applicants = applicants;
 
 export const db = {
   // Create a new applicant
@@ -20,7 +26,9 @@ export const db = {
       createdAt: now,
       updatedAt: now,
     };
+    
     applicants.set(data.applicantId, applicant);
+    
     return applicant;
   },
 

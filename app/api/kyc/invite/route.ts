@@ -23,27 +23,29 @@ export async function POST(request: NextRequest) {
     const externalUserId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Create applicant in Sumsub
-    console.log('Creating applicant with:', { externalUserId, email });
     const applicantResponse = await createApplicant({
       externalUserId,
       email,
     });
-    console.log('Applicant created:', applicantResponse);
 
     // Store in database
+    console.log('💾 Storing applicant in database:', {
+      applicantId: applicantResponse.id,
+      externalUserId,
+      email,
+      status: 'created',
+    });
     const applicant = db.createApplicant({
       applicantId: applicantResponse.id,
       externalUserId,
       email,
       status: 'created',
     });
+    console.log('✅ Applicant stored successfully:', applicant);
 
     // Generate verification link
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const verificationLink = `${baseUrl}/verify?applicantId=${applicant.applicantId}`;
-
-    // In production, send email here
-    console.log(`Send verification link to ${email}: ${verificationLink}`);
 
     return NextResponse.json({
       applicantId: applicant.applicantId,

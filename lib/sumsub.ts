@@ -7,6 +7,8 @@ const SUMSUB_BASE_URL = process.env.SUMSUB_BASE_URL || 'https://api.sumsub.com';
 
 
 
+
+
 export interface CreateApplicantParams {
   externalUserId: string;
   email: string;
@@ -39,6 +41,7 @@ export async function createApplicant(params: CreateApplicantParams): Promise<Ap
 
   const signature = generateSignature(method, url, timestamp, body);
 
+
   try {
     const response = await axios.post(
       `${SUMSUB_BASE_URL}${url}`,
@@ -53,6 +56,7 @@ export async function createApplicant(params: CreateApplicantParams): Promise<Ap
       }
     );
 
+    console.log('✅ Sumsub API Success:', response.data);
     return response.data;
     
   } catch (error: any) {
@@ -68,12 +72,18 @@ export async function createApplicant(params: CreateApplicantParams): Promise<Ap
 
 // Generate access token for applicant
 export async function generateAccessToken(applicantId: string, externalUserId: string): Promise<string> {
-  const url = `/resources/accessTokens?userId=${externalUserId}&ttlInSecs=600`;
+  const levelName = process.env.SUMSUB_LEVEL_NAME || 'id-and-liveness';
+  const url = `/resources/accessTokens/sdk`;
   const timestamp = Math.floor(Date.now() / 1000);
   const method = 'POST';
-  const body = JSON.stringify({ externalUserId });
+  const body = JSON.stringify({
+    ttlInSecs: 600,
+    userId: applicantId,
+    levelName: levelName
+  });
 
   const signature = generateSignature(method, url, timestamp, body);
+
 
   const response = await axios.post(
     `${SUMSUB_BASE_URL}${url}`,
@@ -87,7 +97,6 @@ export async function generateAccessToken(applicantId: string, externalUserId: s
       },
     }
   );
-
   return response.data.token;
 }
 
