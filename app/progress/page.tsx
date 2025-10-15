@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 interface StatusData {
   applicantId: string;
@@ -22,6 +23,24 @@ function ProgressContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchStatus = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/kyc/status/${applicantId}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch status');
+      }
+
+      const data = await response.json();
+      setStatusData(data);
+      setLoading(false);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      setLoading(false);
+    }
+  }, [applicantId]);
+
   useEffect(() => {
     if (!applicantId) {
       setError('No applicant ID provided');
@@ -34,24 +53,7 @@ function ProgressContent() {
     // Poll for status updates every 3 seconds
     const interval = setInterval(fetchStatus, 3000);
     return () => clearInterval(interval);
-  }, [applicantId]);
-
-  const fetchStatus = async () => {
-    try {
-      const response = await fetch(`/api/kyc/status/${applicantId}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch status');
-      }
-
-      const data = await response.json();
-      setStatusData(data);
-      setLoading(false);
-    } catch (err: any) {
-      setError(err.message);
-      setLoading(false);
-    }
-  };
+  }, [applicantId, fetchStatus]);
 
   if (loading) {
     return (
@@ -75,12 +77,12 @@ function ProgressContent() {
           </div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <a 
+          <Link 
             href="/"
             className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
           >
             Go Back
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -177,12 +179,12 @@ function ProgressContent() {
             >
               Continue to Next Step
             </button>
-            <a 
+            <Link 
               href="/"
               className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors"
             >
               Return to Dashboard
-            </a>
+            </Link>
           </div>
         )}
 
@@ -201,12 +203,12 @@ function ProgressContent() {
             >
               Resubmit Verification
             </a>
-            <a 
+            <Link 
               href="/"
               className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors"
             >
               Return to Dashboard
-            </a>
+            </Link>
           </div>
         )}
 
@@ -215,12 +217,12 @@ function ProgressContent() {
             <p className="text-gray-600 text-sm mb-4">
               🔄 This page updates automatically every 3 seconds
             </p>
-            <a 
+            <Link 
               href="/"
               className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
             >
               ← Return to Dashboard
-            </a>
+            </Link>
           </div>
         )}
       </div>

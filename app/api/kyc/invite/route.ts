@@ -52,10 +52,12 @@ export async function POST(request: NextRequest) {
       verificationLink,
       message: 'Invite sent successfully',
     });
-  } catch (error: any) {
-    console.error('Error creating applicant:', error.response?.data || error.message);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = (error as { response?: { data?: unknown } })?.response?.data || errorMessage;
+    console.error('Error creating applicant:', errorDetails);
     return NextResponse.json(
-      { error: 'Failed to create applicant', details: error.response?.data || error.message },
+      { error: 'Failed to create applicant', details: errorDetails },
       { status: 500 }
     );
   }

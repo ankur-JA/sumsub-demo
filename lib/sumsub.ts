@@ -59,19 +59,20 @@ export async function createApplicant(params: CreateApplicantParams): Promise<Ap
     console.log('✅ Sumsub API Success:', response.data);
     return response.data;
     
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorDetails = error as { response?: { status?: number; statusText?: string; data?: unknown }; message?: string };
     console.error('Sumsub API error:', {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      message: error.message
+      status: errorDetails.response?.status,
+      statusText: errorDetails.response?.statusText,
+      data: errorDetails.response?.data,
+      message: errorDetails.message
     });
     throw error;
   }
 }
 
 // Generate access token for applicant
-export async function generateAccessToken(applicantId: string, externalUserId: string): Promise<string> {
+export async function generateAccessToken(applicantId: string): Promise<string> {
   const levelName = process.env.SUMSUB_LEVEL_NAME || 'id-and-liveness';
   const url = `/resources/accessTokens/sdk`;
   const timestamp = Math.floor(Date.now() / 1000);
@@ -111,7 +112,7 @@ export function verifyWebhookSignature(payload: string, signature: string): bool
 }
 
 // Get available verification levels
-export async function getVerificationLevels(): Promise<any> {
+export async function getVerificationLevels(): Promise<unknown> {
   const url = '/resources/levels';
   const timestamp = Math.floor(Date.now() / 1000);
   const method = 'GET';
@@ -131,14 +132,15 @@ export async function getVerificationLevels(): Promise<any> {
     );
 
     return response.data;
-  } catch (error: any) {
-    console.error('Error fetching verification levels:', error.response?.data || error.message);
+  } catch (error: unknown) {
+    const errorDetails = error as { response?: { data?: unknown }; message?: string };
+    console.error('Error fetching verification levels:', errorDetails.response?.data || errorDetails.message);
     throw error;
   }
 }
 
 // Get applicant status
-export async function getApplicantStatus(applicantId: string): Promise<any> {
+export async function getApplicantStatus(applicantId: string): Promise<unknown> {
   const url = `/resources/applicants/${applicantId}/status`;
   const timestamp = Math.floor(Date.now() / 1000);
   const method = 'GET';

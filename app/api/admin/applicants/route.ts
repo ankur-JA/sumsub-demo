@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { mapStatusToProgress } from '@/lib/status-mapper';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const applicants = db.getAllApplicants();
     
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     );
 
     return NextResponse.json(applicantsWithProgress);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching applicants:', error);
     return NextResponse.json(
       { error: 'Failed to fetch applicants' },

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import snsWebSdk from '@sumsub/websdk';
 
 function VerifyContent() {
@@ -11,21 +12,11 @@ function VerifyContent() {
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [, setAccessToken] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const sdkInstanceRef = useRef<any>(null);
+  const sdkInstanceRef = useRef<unknown>(null);
 
-  useEffect(() => {
-    if (!applicantId) {
-      setError('No applicant ID provided');
-      setLoading(false);
-      return;
-    }
-
-    fetchAccessToken();
-  }, [applicantId]);
-
-  const fetchAccessToken = async () => {
+  const fetchAccessToken = useCallback(async () => {
     try {
       const response = await fetch('/api/kyc/token', {
         method: 'POST',
@@ -45,13 +36,14 @@ function VerifyContent() {
       
       // Initialize SDK after getting token
       setTimeout(() => initializeSDK(data.accessToken), 100);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
       setLoading(false);
     }
-  };
+  }, [applicantId]);
 
-  const initializeSDK = (token: string) => {
+  const initializeSDK = useCallback((token: string) => {
     if (!containerRef.current) return;
 
     try {
@@ -66,14 +58,14 @@ function VerifyContent() {
           adaptIframeHeight: true 
         })
         .on("idCheck.onReady", () => {
-          console.log("SDK ready");
+          console.log("Sumsub SDK ready");
         })
         .on("idCheck.onApplicantSubmitted", () => {
           console.log("Verification submitted");
           // Redirect to progress page
           router.push(`/progress?applicantId=${applicantId}`);
         })
-        .on("idCheck.onError", (error: any) => {
+        .on("idCheck.onError", (error: unknown) => {
           console.error("Sumsub error:", error);
           setError("An error occurred during verification");
         })
@@ -81,11 +73,21 @@ function VerifyContent() {
 
       sdkInstanceRef.current = snsWebSdkInstance;
       snsWebSdkInstance.launch(containerRef.current);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("SDK initialization error:", err);
       setError("Failed to initialize verification");
     }
-  };
+  }, [applicantId, router, fetchAccessToken]);
+
+  useEffect(() => {
+    if (!applicantId) {
+      setError('No applicant ID provided');
+      setLoading(false);
+      return;
+    }
+
+    fetchAccessToken();
+  }, [applicantId, fetchAccessToken]);
 
   if (loading) {
     return (
@@ -109,33 +111,30 @@ function VerifyContent() {
           </div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <a 
+          <Link 
             href="/"
             className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
           >
             Go Back
-          </a>
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-4">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Identity Verification
-          </h1>
-          <p className="text-gray-600">
-            Please complete the verification process below
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Identity Verification</h1>
+          <p className="text-gray-600">Please complete the verification process below.</p>
         </div>
-
-        <div className="bg-white rounded-lg shadow-lg p-6">
+        
+        <div className="max-w-4xl mx-auto">
           <div 
             ref={containerRef}
-            className="w-full min-h-[600px]"
+            className="bg-white rounded-lg shadow-lg overflow-hidden"
+            style={{ minHeight: '600px' }}
           />
         </div>
       </div>
@@ -157,4 +156,3 @@ export default function VerifyPage() {
     </Suspense>
   );
 }
-

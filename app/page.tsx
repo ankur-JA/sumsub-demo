@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { mapStatusToProgress } from "@/lib/status-mapper";
 
 interface Applicant {
   applicantId: string;
@@ -52,8 +51,9 @@ export default function AdminDashboard() {
       const data = await response.json();
       setApplicants(data);
       setLoading(false);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
       setLoading(false);
     }
   };
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
           message: data.error || 'Failed to send invite',
         });
       }
-    } catch (error) {
+    } catch {
       setInviteResult({
         success: false,
         message: 'Network error. Please try again.',

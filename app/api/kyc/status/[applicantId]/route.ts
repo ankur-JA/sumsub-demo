@@ -24,7 +24,7 @@ export async function GET(
       ...progressStatus,
       updatedAt: applicant.updatedAt,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching status:', error);
     return NextResponse.json(
       { error: 'Failed to fetch status' },

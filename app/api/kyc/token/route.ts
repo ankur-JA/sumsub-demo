@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate short-lived access token
-    const accessToken = await generateAccessToken(applicantId, applicant.externalUserId);
+    const accessToken = await generateAccessToken(applicantId);
     
 
     // Update status to started if it's still created
@@ -29,9 +29,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ accessToken });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = (error as { response?: { data?: unknown } })?.response?.data || errorMessage;
     return NextResponse.json(
-      { error: 'Failed to generate access token', details: error.response?.data || error.message },
+      { error: 'Failed to generate access token', details: errorDetails },
       { status: 500 }
     );
   }
