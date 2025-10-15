@@ -99,6 +99,7 @@ export default function AdminDashboard() {
     }
   };
 
+
   const getStatusColor = (state: string) => {
     switch (state) {
       case 'completed': return 'bg-green-100 text-green-800';
@@ -174,13 +175,40 @@ export default function AdminDashboard() {
               <p className="text-gray-600 mt-2">Monitor KYC verification progress</p>
             </div>
             <div className="flex space-x-4">
-              <button 
-                onClick={fetchApplicants}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-              >
-                Refresh
-              </button>
+              <div className="text-sm text-gray-500 flex items-center">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                Auto-refreshing every 5s
+              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Webhook Info */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <h3 className="text-sm font-semibold text-blue-900 mb-2">🔗 Real-time Webhook Configuration</h3>
+          <p className="text-sm text-blue-700 mb-2">
+            Configure this URL in your Sumsub dashboard for automatic status updates:
+          </p>
+          <div className="bg-white p-2 rounded border border-blue-300">
+            <code className="text-xs text-blue-800">
+              {typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/api/sumsub/webhook
+            </code>
+          </div>
+          <div className="mt-3 text-xs text-blue-600">
+            <p>📋 <strong>Steps to configure:</strong></p>
+            <ol className="list-decimal list-inside mt-1 space-y-1">
+              <li>Go to Sumsub Dashboard → Dev space → Webhooks → Webhook manager</li>
+              <li>Click &quot;Create webhook&quot; and add the webhook URL above</li>
+              <li>Select these webhook types:</li>
+              <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
+                <li><code className="bg-gray-100 px-1 rounded">applicantCreated</code> - 5% progress</li>
+                <li><code className="bg-gray-100 px-1 rounded">applicantPending</code> - 40% progress</li>
+                <li><code className="bg-gray-100 px-1 rounded">applicantReviewed</code> - 100% progress</li>
+                <li><code className="bg-gray-100 px-1 rounded">applicantOnHold</code> - Additional info needed</li>
+              </ul>
+              <li>Use SHA256 signature algorithm</li>
+              <li>Test with a verification to see real-time progress updates</li>
+            </ol>
           </div>
         </div>
 

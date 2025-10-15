@@ -4,49 +4,60 @@ import { db } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔔 Webhook received at:', new Date().toISOString());
+    console.log('📋 Request headers:', Object.fromEntries(request.headers.entries()));
+    
     const signature = request.headers.get('x-payload-digest');
     const body = await request.text();
+    
+    console.log('📝 Webhook body:', body);
+    console.log('🔐 Signature header:', signature);
+    console.log('🔐 All headers:', Object.fromEntries(request.headers.entries()));
 
     // Verify webhook signature
     if (signature && !verifyWebhookSignature(body, signature)) {
-      console.error('Invalid webhook signature');
+      console.error('❌ Invalid webhook signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
     const event = JSON.parse(body);
-    console.log('Received Sumsub webhook:', event);
+    console.log('✅ Received Sumsub webhook:', JSON.stringify(event, null, 2));
 
-    const { applicantId, reviewStatus, type } = event;
+    const { applicantId, type, reviewStatus, reviewResult } = event;
 
     if (!applicantId) {
       return NextResponse.json({ error: 'Missing applicantId' }, { status: 400 });
     }
 
-    // Map webhook type to status
+    // Map webhook type to status based on Sumsub documentation
     let status = 'pending';
-    let review = reviewStatus?.reviewAnswer;
+    let review = reviewStatus;
 
     switch (type) {
       case 'applicantCreated':
         status = 'created';
+        review = 'init';
         break;
       case 'applicantPending':
         status = 'pending';
+        review = 'pending';
         break;
       case 'applicantOnHold':
         status = 'completed';
         review = 'onHold';
         break;
-      case 'applicantApproved':
+      case 'applicantReviewed':
         status = 'completed';
-        review = 'green';
+        review = reviewResult?.reviewAnswer?.toLowerCase() || 'completed';
         break;
-      case 'applicantRejected':
-        status = 'completed';
-        review = 'red';
+      case 'applicantActionOnHold':
+        status = 'pending';
+        review = 'onHold';
         break;
       default:
-        status = type.replace('applicant', '').toLowerCase();
+        console.log(`⚠️ Unknown webhook type: ${type}`);
+        status = 'pending';
+        review = reviewStatus;
     }
 
     // Update applicant status in database

@@ -103,12 +103,27 @@ export async function generateAccessToken(applicantId: string): Promise<string> 
 
 // Verify webhook signature
 export function verifyWebhookSignature(payload: string, signature: string): boolean {
+  if (!signature) {
+    console.log('⚠️ No signature provided');
+    return false;
+  }
+
   const expectedSignature = crypto
     .createHmac('sha256', SUMSUB_SECRET_KEY)
     .update(payload)
     .digest('hex');
   
-  return signature === expectedSignature;
+  // Sumsub sends signature in format: sha256=<hash>
+  // Remove the 'sha256=' prefix if present
+  const cleanSignature = signature.replace(/^sha256=/, '');
+  
+  console.log('🔐 Signature verification:', {
+    received: cleanSignature,
+    expected: expectedSignature,
+    match: cleanSignature === expectedSignature
+  });
+  
+  return cleanSignature === expectedSignature;
 }
 
 // Get available verification levels
