@@ -140,18 +140,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
-
-        {/* <div className="mt-8 pt-6 border-t border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Quick Links</h2>
-          <div className="space-y-2">
-            <a 
-              href="/verify?demo=true" 
-              className="block text-indigo-600 hover:text-indigo-800 text-sm"
-            >
-              → Test Verification Flow
-            </a>
-          </div>
-        </div> */}
       </div>
     </div>
   );

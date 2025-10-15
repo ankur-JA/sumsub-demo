@@ -5,18 +5,13 @@ const SUMSUB_APP_TOKEN = process.env.SUMSUB_APP_TOKEN || '';
 const SUMSUB_SECRET_KEY = process.env.SUMSUB_SECRET_KEY || '';
 const SUMSUB_BASE_URL = process.env.SUMSUB_BASE_URL || 'https://api.sumsub.com';
 
-// Debug: Check if environment variables are loaded
-console.log('Environment check:', {
-  hasToken: !!SUMSUB_APP_TOKEN,
-  hasSecret: !!SUMSUB_SECRET_KEY,
-  tokenPrefix: SUMSUB_APP_TOKEN.substring(0, 10) + '...',
-  baseUrl: SUMSUB_BASE_URL
-});
+
 
 export interface CreateApplicantParams {
   externalUserId: string;
   email: string;
   phone?: string;
+  levelName?: string;
 }
 
 export interface ApplicantResponse {
@@ -33,27 +28,16 @@ function generateSignature(method: string, url: string, timestamp: number, body?
 
 // Create a new applicant in Sumsub
 export async function createApplicant(params: CreateApplicantParams): Promise<ApplicantResponse> {
-  const url = '/resources/applicants';
+  const levelName = params.levelName || process.env.SUMSUB_LEVEL_NAME || 'basic-kyc-level';
+  const url = `/resources/applicants?levelName=${encodeURIComponent(levelName)}`;
   const timestamp = Math.floor(Date.now() / 1000);
   const method = 'POST';
   const body = JSON.stringify({
     externalUserId: params.externalUserId,
     email: params.email,
-    ...(params.phone && { phone: params.phone }),
   });
 
   const signature = generateSignature(method, url, timestamp, body);
-
-  console.log('Sumsub API request:', {
-    url: `${SUMSUB_BASE_URL}${url}`,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-App-Token': SUMSUB_APP_TOKEN,
-      'X-App-Access-Ts': timestamp.toString(),
-      'X-App-Access-Sig': signature,
-    },
-    body
-  });
 
   try {
     const response = await axios.post(
@@ -69,8 +53,8 @@ export async function createApplicant(params: CreateApplicantParams): Promise<Ap
       }
     );
 
-    console.log('Sumsub API response:', response.data);
     return response.data;
+    
   } catch (error: any) {
     console.error('Sumsub API error:', {
       status: error.response?.status,
